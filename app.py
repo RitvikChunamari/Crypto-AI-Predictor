@@ -149,7 +149,7 @@ if st.sidebar.button("RUN INFERENCE"):
         X_train, y_train, X_test, y_test, f_scaler, t_scaler = split_and_scale_data(df)
         
     # 3. Model Loading / Training
-    model_path = f'models/{ticker}_{mode}_model.keras'
+    model_path = f'models/{ticker}_{mode}_lstm_model.keras'
     if os.path.exists(model_path):
         st.info(f"LOADING PRE-TRAINED WEIGHTS...")
         model = load_model(model_path)
