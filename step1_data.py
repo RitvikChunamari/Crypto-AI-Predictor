@@ -16,7 +16,7 @@ def fetch_binance_data(ticker, interval='1m', limit=50000):
     if not symbol.endswith('T'):
         symbol += 'T'
         
-    url = "https://api.binance.com/api/v3/klines"
+    url = "https://api.binance.us/api/v3/klines"
     klines = []
     end_time = int(datetime.datetime.now().timestamp() * 1000)
     
@@ -83,6 +83,12 @@ def fetch_and_engineer_data(ticker, mode='daily'):
         nasdaq = yf.download('^IXIC', period=period, interval=interval)['Close']
         dxy = yf.download('DX-Y.NYB', period=period, interval=interval)['Close']
         
+        if mode == 'hourly':
+            df.index = df.index.tz_convert('UTC')
+            nasdaq.index = nasdaq.index.tz_convert('UTC').round('h')
+            dxy.index = dxy.index.tz_convert('UTC').round('h')
+            nasdaq = nasdaq[~nasdaq.index.duplicated(keep='first')]
+            dxy = dxy[~dxy.index.duplicated(keep='first')]
         df['Nasdaq'] = nasdaq
         df['DXY'] = dxy
         
