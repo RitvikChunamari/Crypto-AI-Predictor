@@ -69,7 +69,7 @@ def predict_crypto(ticker: str = "BTC-USD", mode: str = "daily"):
             "predicted_price": predicted_price,
             "pct_change": pct_change,
             "action": action,
-            "confidence": confidence
+            "confidence": confidence, "historical_data": [float(np.squeeze(x)) for x in df['Close'].tail(30).values.tolist()]
         }
 
     except Exception as e:
