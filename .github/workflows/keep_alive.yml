@@ -1,0 +1,14 @@
+name: Keep Render Awake
+
+on:
+  schedule:
+    # Runs every 10 minutes to prevent Render's 15-minute sleep timer
+    - cron: '*/10 * * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  ping_render:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping API
+        run: curl -s "https://crypto-ai-api-y2j3.onrender.com/predict?ticker=BTC-USD&mode=daily" > /dev/null
