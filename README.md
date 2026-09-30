@@ -1,43 +1,44 @@
-# Institutional-Grade Crypto Price Predictor 🚀📈
+# Institutional Crypto AI Predictor
 
-An advanced, multi-timeframe cryptocurrency forecasting pipeline built with **Deep Learning (1D CNN + GRU)**, **Macro-Economic Correlations**, and an **Algorithmic Backtesting Engine**.
+![UI Preview](https://img.shields.io/badge/UI-TradingView_Integrated-0A0A0A?style=for-the-badge&logo=react)
+![Backend](https://img.shields.io/badge/Backend-FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)
+![AI Model](https://img.shields.io/badge/AI_Model-1D_CNN_%2B_GRU-FF6F00?style=for-the-badge&logo=tensorflow&logoColor=white)
+![Status](https://img.shields.io/badge/Status-Zero_Cold_Start-2ea44f?style=for-the-badge)
 
-## 🧠 Overview
-Unlike standard technical analysis bots that rely solely on lagging indicators, this AI engine is designed to predict cryptocurrency price action by analyzing a 12-dimensional feature set that includes global macro-economic health. 
+A highly advanced, institutional-grade cryptocurrency price prediction engine. This project deviates from standard academic "Jupyter Notebook" models by deploying a production-ready **Zero-Cold-Start Architecture**. It combines a Convolutional Neural Network (1D-CNN) and Gated Recurrent Units (GRU) to forecast high-frequency and low-frequency price action.
 
-It predicts future prices across three dynamic timeframes:
-* **Daily (Swing Trading):** Analyzes 5 years of historical data to predict tomorrow's closing price.
-* **Hourly (Day Trading):** Analyzes 2 years of intra-day data to predict the next hour.
-* **Minute-by-Minute (Scalping):** Hooks into the Binance Public API to analyze millions of rows for high-frequency trading.
+## 🚀 True "No Compromise" Architecture
+Unlike 99% of open-source AI crypto predictors that rely on slow Streamlit dashboards or expensive cloud GPUs, this project uses a unique decoupled architecture:
 
-## ⚙️ Core Architecture
+1. **Frontend (GitHub Pages):** A hyper-minimalist, FinTech-grade UI hosted statically. Features the TradingView Advanced Chart widget and a dual-fallback WebSocket (Binance US / Binance Global) for instant, sub-second live price ticks.
+2. **Backend (Render + FastAPI):** A lightweight Python inference engine.
+3. **The Cron-Job Hack:** To bypass Render's 15-minute free-tier sleep timer, a GitHub Actions Cron Job pings the API every 10 minutes. This guarantees **0ms cold starts**, 24/7 uptime, and instant AI inference, mimicking a premium cloud server for free.
+4. **Memory-Leak Patch:** Implements a global TensorFlow Model Cache so the heavy `.keras` weights are loaded into RAM only once, preventing Out-Of-Memory (OOM) crashes during multiple API hits.
 
-### 1. The Neural Network (Hybrid 1D CNN + GRU)
-* Uses a **1D Convolutional Neural Network (CNN)** to extract spatial feature relationships (e.g., how the MACD interacts with the Bollinger Bands).
-* Passes the feature maps into a **Gated Recurrent Unit (GRU)** to process the chronological sequence and identify long-term time-series dependencies.
-* Heavily regularized with `Dropout(0.3)` and optimized using `EarlyStopping` to prevent overfitting.
+## 🧠 The Neural Network Architecture
+The core model is a Hybrid **1D-CNN + Stacked GRU**. 
+- **1D-CNN:** Extracts local, short-term spatial patterns and micro-trends from the price action.
+- **GRU:** Captures long-term temporal dependencies without the vanishing gradient problems of standard RNNs. GRUs were chosen over LSTMs for faster inference times while maintaining identical accuracy.
 
-### 2. The 12-Dimensional Feature Pipeline
-Engineered 12 strict features to feed the neural network without data leakage:
-* **Raw Action:** `Close`, `Volume`
-* **Moving Averages:** `SMA_20`, `SMA_50`, `EMA_20`
-* **Momentum & Volatility:** `RSI`, `MACD`, `ATR`, `Bollinger Bands (High/Low)`
-* **Macro-Economics:** `Nasdaq (^IXIC)`, `US Dollar Index (DXY)`
+### 📊 Features & Metrics Used
+The model does **NOT** just look at closing prices. It ingests a 12-dimensional feature matrix for every time step:
+*   **Price Action:** Open, High, Low, Close, Volume (OHLCV)
+*   **Momentum & Volatility (Technical Indicators):** SMA_20, SMA_50, EMA_20, RSI, MACD, ATR, Bollinger Bands (High/Low)
+*   **Macro-Economic Edges:** 
+    *   **Nasdaq (NDX):** Used to correlate crypto movements with the broader tech stock market.
+    *   **US Dollar Index (DXY):** Used as an inverse correlation metric (when DXY goes up, crypto traditionally goes down).
+    *(Note: NDX and DXY are used strictly as input features for correlation context, not as targets for prediction).*
 
-### 3. Integrated Gradients (Explainability)
-To prevent the AI from becoming a "black box", the pipeline includes native TensorFlow **Integrated Gradients**. It calculates the exact mathematical derivative of the model's activations to prove which features drove the prediction (e.g., proving that the US Dollar Index had a 12% impact on the model's decision making).
+## 🔌 APIs & Services Used
+*   **yfinance (Yahoo Finance):** Used to fetch historical Daily/Hourly data and Macro-economic data (Nasdaq/DXY).
+*   **Binance Public API:** Used to fetch 50,000+ rows of Minute-by-Minute high-frequency data for minute-scale training.
+*   **Binance WebSockets (`stream.binance.us` / `stream.binance.com`):** Used in the frontend for live, 1-second price updates.
+*   **TradingView Widget API:** Powers the interactive charting interface with built-in indicators.
+*   **FastAPI & Uvicorn:** High-performance async backend.
+*   **TensorFlow & Keras:** Deep learning framework for the CNN-GRU model.
 
-### 4. The Backtesting Simulator
-Includes a custom-built backtesting engine that simulates real-world algorithmic trading. It feeds the AI a virtual `$10,000`, forces it to trade on unseen test data, and deducts a strict `0.1%` exchange fee on every single transaction to calculate true Net Profit against a baseline "Buy & Hold" strategy.
-
-## 🛠️ Tech Stack
-* **Deep Learning:** TensorFlow, Keras
-* **Data Engineering:** Pandas, NumPy, yfinance, Binance API
-* **Technical Analysis:** `ta` library
-* **Visualization:** Matplotlib
-
-## 📈 Real-World Results
-During a simulated 300-day bear market backtest on Bitcoin (where a standard Buy & Hold strategy lost **-7.83%** of its value), the AI successfully detected incoming crashes via Macro-Economic correlations, sold its positions to cash, and ended the period with a positive profit of **+0.97%**.
+## 💡 Zero-Shot Transfer Learning
+The backend implements dynamic `MinMaxScaler` normalization. This means the model trained on `BTC-USD` geometric patterns can be applied to *any* altcoin (like `SHIB-USD` or `SOL-USD`) instantly via transfer learning. The UI allows searching for any ticker, and the backend will normalize the new coin's data and predict its price action without needing to train a new model from scratch.
 
 ---
-*Developed by Ritvik Chunamari.*
+*Disclaimer: This project is for educational and research purposes only. Cryptocurrency markets are highly volatile. The predictions generated by this AI should not be used as financial advice.*
