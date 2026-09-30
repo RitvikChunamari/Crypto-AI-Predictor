@@ -9,6 +9,8 @@ from tensorflow.keras.models import load_model
 
 app = FastAPI()
 
+loaded_models = {}
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -273,12 +275,18 @@ def predict_crypto(ticker: str = "BTC-USD", mode: str = "daily"):
         model_path = f'models/{ticker}_{mode}_lstm_model.keras'
         fallback_path = f'models/BTC-USD_daily_lstm_model.keras'
         
-        if os.path.exists(model_path):
+        global loaded_models
+        
+        if model_path in loaded_models:
+            model = loaded_models[model_path]
+        elif os.path.exists(model_path):
             model = load_model(model_path)
+            loaded_models[model_path] = model
+        elif fallback_path in loaded_models:
+            model = loaded_models[fallback_path]
         elif os.path.exists(fallback_path):
-            # Use Transfer Learning! The features are min-max scaled dynamically per coin, 
-            # meaning the BTC-USD Neural Net is universally applicable to any asset's normalized geometric patterns!
             model = load_model(fallback_path)
+            loaded_models[fallback_path] = model
         else:
             return {"error": "Critical Error: Core Neural Network weights missing from server."}
 
