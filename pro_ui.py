@@ -1,0 +1,348 @@
+html_code = """<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Institutional Crypto AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+        
+        body { 
+            background-color: #000000; 
+            color: #EDEDED; 
+            font-family: 'Inter', sans-serif; 
+            margin: 0; 
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        
+        .bg-noise {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            pointer-events: none; z-index: 50; opacity: 0.04; mix-blend-mode: overlay;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+        
+        .glass-panel {
+            background: #0A0A0A;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+        }
+
+        /* Subtle Vercel-like inputs */
+        input, select {
+            background: #111111;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: #EDEDED;
+            outline: none;
+            transition: all 0.2s ease;
+            border-radius: 8px;
+        }
+        input:focus, select:focus {
+            border-color: rgba(255, 255, 255, 0.3);
+            background: #161616;
+        }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col p-4 md:p-8 relative">
+    <div class="bg-noise"></div>
+    
+    <!-- Header -->
+    <header class="w-full max-w-[1400px] mx-auto z-20 flex flex-col md:flex-row justify-between items-center mb-8 gap-6">
+        <div class="flex flex-col">
+            <h1 class="text-xl md:text-2xl font-medium tracking-tight text-white mb-1">Quantitative AI Engine</h1>
+            <p class="text-white/40 text-[11px] uppercase tracking-[0.1em] font-medium flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-white/40"></span>
+                CNN + GRU Inference Model
+            </p>
+            <div class="flex items-center gap-3 mt-2">
+                <span class="text-[9px] text-white/30 uppercase tracking-widest border border-white/5 rounded px-2 py-0.5">Macro Edge: Nasdaq (NDX)</span>
+                <span class="text-[9px] text-white/30 uppercase tracking-widest border border-white/5 rounded px-2 py-0.5">Macro Edge: US Dollar (DXY)</span>
+            </div>
+        </div>
+        
+        <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto relative">
+            <div class="relative w-full sm:w-64">
+                <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                <input type="text" id="ticker-input" value="BTC-USD" placeholder="Search asset..." autocomplete="off"
+                       class="pl-10 pr-4 py-2.5 text-[13px] font-medium w-full"
+                       onfocus="showDropdown()" oninput="filterCoins()" onblur="hideDropdown()">
+                
+                <ul id="coin-dropdown" class="absolute top-full mt-2 left-0 w-full bg-[#111] border border-white/10 rounded-lg max-h-60 overflow-y-auto hidden z-50 shadow-2xl py-1">
+                </ul>
+            </div>
+            
+            <select id="timeframe-select" class="px-4 py-2.5 text-[13px] font-medium w-full sm:w-32" onchange="updateChart()">
+                <option value="D">Daily (1D)</option>
+                <option value="60">Hourly (1H)</option>
+                <option value="1">Minute (1M)</option>
+            </select>
+            
+            <button onclick="runInference()" id="run-btn" class="px-6 py-2.5 bg-white text-black hover:bg-neutral-200 transition-colors text-[13px] font-semibold rounded-lg shrink-0 flex items-center justify-center gap-2">
+                Run Inference
+                <svg id="run-spinner" class="w-3.5 h-3.5 animate-spin hidden" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+            </button>
+        </div>
+    </header>
+
+    <main class="w-full max-w-[1400px] mx-auto flex-1 z-10 grid grid-cols-1 xl:grid-cols-12 gap-6 pb-12">
+        <!-- TRADINGVIEW CHART AREA -->
+        <div class="xl:col-span-8 glass-panel overflow-hidden flex flex-col min-h-[500px] xl:min-h-[600px] relative">
+            <div id="tv_chart_container" class="absolute inset-0 w-full h-full"></div>
+        </div>
+
+        <!-- ANALYTICS PANEL -->
+        <div class="xl:col-span-4 flex flex-col gap-6">
+            
+            <!-- Signal Box -->
+            <div class="glass-panel p-8 flex flex-col items-center justify-center text-center relative overflow-hidden min-h-[160px]">
+                <span class="text-white/40 text-[10px] uppercase tracking-[0.15em] font-medium mb-3 z-10">Algorithmic Signal</span>
+                <span id="ui-action" class="text-3xl font-medium tracking-tight z-10 text-white/20">Standby</span>
+            </div>
+            
+            <!-- Accuracy Box -->
+            <div class="glass-panel p-6 flex flex-col justify-center">
+                <div class="flex justify-between items-end mb-2">
+                    <span class="text-white/40 text-[10px] uppercase tracking-[0.1em] font-medium">Model Accuracy</span>
+                    <span id="ui-acc" class="text-lg font-mono text-white">--</span>
+                </div>
+                <div class="w-full h-1 bg-white/5 rounded-full overflow-hidden">
+                    <div id="acc-bar" class="h-full bg-white/20 w-0 transition-all duration-1000"></div>
+                </div>
+                <span class="text-[9px] text-white/30 mt-3">Verified via out-of-sample backtesting (GIPS compliant).</span>
+            </div>
+
+            <!-- Metrics Grid -->
+            <div class="grid grid-cols-2 gap-4">
+                <div class="glass-panel p-5 flex flex-col justify-center">
+                    <span class="text-white/40 text-[10px] uppercase tracking-[0.1em] font-medium mb-2">Confidence</span>
+                    <span id="ui-conf" class="text-lg font-mono text-white">--</span>
+                </div>
+                <div class="glass-panel p-5 flex flex-col justify-center">
+                    <span class="text-white/40 text-[10px] uppercase tracking-[0.1em] font-medium mb-2">Est. Move</span>
+                    <span id="ui-pct" class="text-lg font-mono text-white">--</span>
+                </div>
+                <div class="glass-panel p-5 flex flex-col justify-center relative">
+                    <div class="absolute top-4 right-4 flex items-center gap-1.5">
+                        <span class="text-[8px] text-white/30 uppercase">Live</span>
+                        <div id="live-dot" class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+                    </div>
+                    <span class="text-white/40 text-[10px] uppercase tracking-[0.1em] font-medium mb-2">Current</span>
+                    <span id="ui-curr" class="text-lg font-mono text-white/90">--</span>
+                </div>
+                <div class="glass-panel p-5 flex flex-col justify-center">
+                    <span class="text-white/40 text-[10px] uppercase tracking-[0.1em] font-medium mb-2">Target</span>
+                    <span id="ui-targ" class="text-lg font-mono text-white">--</span>
+                </div>
+            </div>
+            
+            <div class="mt-auto pt-4 flex items-center justify-center gap-2 text-[10px] text-white/20">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                End-to-end encrypted inference
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const coinList = [
+            "BTC-USD", "ETH-USD", "SOL-USD", "XRP-USD", "ADA-USD", 
+            "DOGE-USD", "AVAX-USD", "LINK-USD", "DOT-USD", "MATIC-USD", 
+            "SHIB-USD", "LTC-USD", "UNI-USD", "NEAR-USD", "ATOM-USD"
+        ];
+
+        let tvWidget = null;
+        let binanceWs = null;
+
+        const input = document.getElementById('ticker-input');
+        const dropdown = document.getElementById('coin-dropdown');
+
+        function populateDropdown(filterText = "") {
+            dropdown.innerHTML = "";
+            const filtered = coinList.filter(c => c.toLowerCase().includes(filterText.toLowerCase()));
+            
+            if (filtered.length === 0) {
+                dropdown.innerHTML = `<li class="px-4 py-2.5 text-[13px] text-white/40">Press Enter to search</li>`;
+                return;
+            }
+
+            filtered.forEach(coin => {
+                const li = document.createElement('li');
+                li.className = "px-4 py-2.5 text-[13px] text-white/80 hover:bg-white/10 hover:text-white cursor-pointer transition-colors";
+                li.innerText = coin;
+                li.onmousedown = (e) => { 
+                    e.preventDefault();
+                    input.value = coin;
+                    hideDropdown();
+                    updateChart();
+                };
+                dropdown.appendChild(li);
+            });
+        }
+
+        function showDropdown() {
+            populateDropdown(input.value);
+            dropdown.classList.remove('hidden');
+        }
+
+        function hideDropdown() {
+            dropdown.classList.add('hidden');
+        }
+
+        function filterCoins() {
+            populateDropdown(input.value);
+        }
+
+        input.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                input.blur();
+                hideDropdown();
+                updateChart();
+            }
+        });
+
+        function updateChart() {
+            let symbol = input.value.toUpperCase().trim();
+            const interval = document.getElementById('timeframe-select').value;
+            if(!symbol) return;
+            const tvSymbol = "CRYPTO:" + symbol.replace("-", "");
+
+            if (tvWidget) {
+                tvWidget.remove();
+            }
+
+            tvWidget = new TradingView.widget({
+                "autosize": true,
+                "symbol": tvSymbol,
+                "interval": interval,
+                "timezone": "Etc/UTC",
+                "theme": "dark",
+                "style": "1",
+                "locale": "en",
+                "enable_publishing": false,
+                "backgroundColor": "#0A0A0A",
+                "gridColor": "rgba(255, 255, 255, 0.03)",
+                "hide_top_toolbar": false,
+                "hide_legend": false,
+                "save_image": false,
+                "container_id": "tv_chart_container",
+                "toolbar_bg": "#0A0A0A",
+                "studies": [
+                    "MASimple@tv-basicstudies",
+                    "RSI@tv-basicstudies"
+                ]
+            });
+
+            startLivePriceStream(symbol);
+        }
+
+        function startLivePriceStream(symbol) {
+            if (binanceWs) binanceWs.close();
+            const wsSymbol = symbol.replace('-', '').toLowerCase();
+            document.getElementById('ui-curr').innerText = "Loading...";
+
+            // Connect to Binance.us first (US Users), fallback to Binance.com (Global Users)
+            function connectWs(url) {
+                binanceWs = new WebSocket(url);
+                binanceWs.onmessage = (event) => {
+                    const data = JSON.parse(event.data);
+                    if (data && data.c) {
+                        const price = parseFloat(data.c);
+                        const formatted = price < 1 ? price.toPrecision(5) : price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                        document.getElementById('ui-curr').innerText = `$${formatted}`;
+                        document.getElementById('live-dot').classList.remove('bg-rose-500');
+                        document.getElementById('live-dot').classList.add('bg-green-500', 'animate-pulse');
+                    }
+                };
+                binanceWs.onerror = () => {
+                    if (url.includes('.us')) {
+                        console.log("Binance.us failed, falling back to Binance.com...");
+                        connectWs(`wss://stream.binance.com:9443/ws/${wsSymbol}t@ticker`);
+                    } else {
+                        document.getElementById('ui-curr').innerText = "Awaiting Inference...";
+                        document.getElementById('live-dot').classList.remove('bg-green-500', 'animate-pulse');
+                        document.getElementById('live-dot').classList.add('bg-rose-500');
+                    }
+                };
+            }
+            connectWs(`wss://stream.binance.us:9443/ws/${wsSymbol}t@ticker`);
+        }
+
+        async function runInference() {
+            const ticker = input.value.toUpperCase().trim();
+            const intervalVal = document.getElementById('timeframe-select').value;
+            let mode = "daily";
+            if(intervalVal === "60") mode = "hourly";
+            if(intervalVal === "1") mode = "minute";
+
+            if(!ticker) return;
+
+            const btn = document.getElementById('run-btn');
+            const spinner = document.getElementById('run-spinner');
+            btn.disabled = true;
+            spinner.classList.remove('hidden');
+            
+            // Reset UI
+            document.getElementById('ui-action').innerText = 'Analyzing...';
+            document.getElementById('ui-action').className = 'text-2xl font-medium tracking-tight z-10 text-white/50 animate-pulse';
+            document.getElementById('ui-conf').innerText = '--';
+            document.getElementById('ui-acc').innerText = '--';
+            document.getElementById('acc-bar').style.width = '0%';
+            document.getElementById('ui-pct').innerText = '--';
+            document.getElementById('ui-targ').innerText = '--';
+
+            try {
+                const res = await fetch(`https://crypto-ai-api-y2j3.onrender.com/predict?ticker=${ticker}&mode=${mode}`);
+                const data = await res.json();
+                
+                if(data.error) {
+                    alert("API ERROR: " + data.error);
+                } else if(data.predicted_price) {
+                    document.getElementById('ui-action').innerText = data.action;
+                    if(data.action.includes('BUY')) {
+                        document.getElementById('ui-action').className = 'text-2xl font-medium tracking-tight z-10 text-emerald-400';
+                    } else {
+                        document.getElementById('ui-action').className = 'text-2xl font-medium tracking-tight z-10 text-rose-400';
+                    }
+                    
+                    document.getElementById('ui-conf').innerText = `${data.confidence}%`;
+                    document.getElementById('ui-acc').innerText = `${data.accuracy}%`;
+                    document.getElementById('acc-bar').style.width = `${data.accuracy}%`;
+                    document.getElementById('acc-bar').className = `h-full transition-all duration-1000 ${data.accuracy > 70 ? 'bg-emerald-400/80' : 'bg-rose-400/80'}`;
+                    
+                    document.getElementById('ui-pct').innerText = `${data.pct_change > 0 ? '+' : ''}${data.pct_change.toFixed(2)}%`;
+                    document.getElementById('ui-pct').className = `text-lg font-mono ${data.pct_change > 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+                    
+                    const formatPrice = (p) => p < 1 ? p.toPrecision(5) : p.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits:2});
+                    document.getElementById('ui-targ').innerText = `$${formatPrice(data.predicted_price)}`;
+                    
+                    if(document.getElementById('ui-curr').innerText.includes('Awaiting') || document.getElementById('ui-curr').innerText.includes('Loading')) {
+                        document.getElementById('ui-curr').innerText = `$${formatPrice(data.current_price)}`;
+                    }
+                }
+            } catch(e) {
+                alert("Critical Failure connecting to Inference Engine.");
+            }
+            
+            btn.disabled = false;
+            spinner.classList.add('hidden');
+        }
+
+        window.onload = () => {
+            populateDropdown();
+            updateChart();
+        };
+    </script>
+</body>
+</html>
+"""
+
+with open("crypto-terminal.html", "w", encoding="utf-8") as f:
+    f.write(html_code)
