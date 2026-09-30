@@ -1,4 +1,4 @@
-# Institutional Crypto AI Predictor
+# Kinetix Quant
 
 ![UI Preview](https://img.shields.io/badge/UI-TradingView_Integrated-0A0A0A?style=for-the-badge&logo=react)
 ![Backend](https://img.shields.io/badge/Backend-FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)
